@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokédex</title>
+</head>
+<body>
+    <h1>Pokédex</h1>
+    <label for="searchInput">Buscar Pokémon:</label>
+    <input type="text" id="searchInput" onkeyup="handleSearch(event)">
+    <div id="pokemonInfo"></div>
+
+    <script>
+        // Función para cargar y procesar el archivo XML
+        function loadXMLDoc(filename) {
+            let xhttp;
+            if (window.XMLHttpRequest) {
+                xhttp = new XMLHttpRequest();
+            } else {
+                xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+
+            xhttp.open("GET", filename, false);
+
+            let xmlDoc;
+            xhttp.onreadystatechange = function() {
+                if (xhttp.readyState === 4) {
+                    if (xhttp.status === 200 || xhttp.status === 0) {
+                        // Archivo cargado correctamente
+                        const parser = new DOMParser();
+                        xmlDoc = parser.parseFromString(xhttp.responseText, "text/xml");
+                    } else {
+                        // Error al cargar el archivo
+                        alert("Error al cargar el archivo pokedex.xml");
+                    }
+                }
+            };
+
+            xhttp.send();
+            return xmlDoc;
+        }
+
+        // Función para buscar y mostrar información del Pokémon
+        function searchPokemon() {
+            const searchValue = document.getElementById("searchInput").value.toUpperCase();
+            const xmlDoc = loadXMLDoc("pokedex.xml");
+
+            if (!xmlDoc) {
+                // Si el archivo no se ha cargado correctamente
+                alert("Error al cargar el archivo pokedex.xml");
+                return;
+            }
+
+            const pokemonList = xmlDoc.getElementsByTagName("pokemon");
+            let output = "";
+            let found = false;
+
+            for (let i = 0; i < pokemonList.length; i++) {
+                const species = pokemonList[i].getElementsByTagName("species")[0].textContent;
+                if (species.toUpperCase().includes(searchValue)) {
+                    found = true;
+                    const dex = pokemonList[i].getElementsByTagName("dex")[0].textContent;
+                    const types = pokemonList[i].getElementsByTagName("type");
+                    const abilities = pokemonList[i].getElementsByTagName("ability");
+                    const baseStats = pokemonList[i].getElementsByTagName("baseStats")[0];
+                    const experience = pokemonList[i].getElementsByTagName("experience")[0].textContent;
+                    const rateType = pokemonList[i].getElementsByTagName("rateType")[0].textContent;
+
+                    output += `
+                        <h2>${species}</h2>
+                        <p>Dex: ${dex}</p>
+                        <p>Types: ${Array.from(types).map(type => type.textContent).join(", ")}</p>
+                        <p>Abilities: ${Array.from(abilities).map(ability => ability.textContent).join(", ")}</p>
+                        <p>Base Stats:</p>
+                        <ul>
+                            <li>HP: ${baseStats.getElementsByTagName("HP")[0].textContent}</li>
+                            <li>ATK: ${baseStats.getElementsByTagName("ATK")[0].textContent}</li>
+                            <li>DEF: ${baseStats.getElementsByTagName("DEF")[0].textContent}</li>
+                            <li>SPD: ${baseStats.getElementsByTagName("SPD")[0].textContent}</li>
+                            <li>SATK: ${baseStats.getElementsByTagName("SATK")[0].textContent}</li>
+                            <li>SDEF: ${baseStats.getElementsByTagName("SDEF")[0].textContent}</li>
+                        </ul>
+                        <p>Experience: ${experience}</p>
+                        <p>Rate Type: ${rateType}</p>
+                        <hr>
+                    `;
+                }
+            }
+
+            if (!found) {
+                // Si el pokémon no se encontró
+                output = "<p>Pokémon no encontrado</p>";
+            }
+
+            document.getElementById("pokemonInfo").innerHTML = output;
+        }
+
+        // Función para capturar la tecla Enter en el campo de búsqueda
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                searchPokemon();
+            }
+        }
+    </script>
+</body>
+</html>
